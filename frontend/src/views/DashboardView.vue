@@ -1,24 +1,42 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useTaskStore } from '@/stores/task';
+import { useAuthStore } from '@/stores/auth';
+import { useWebSocket } from '@/composables/useWebSocket';
 import AppLayout from '@/layouts/AppLayout.vue';
 import TaskForm from '@/components/TaskForm.vue';
 import TaskList from '@/components/TaskList.vue';
 import ErrorDisplay from '@/components/ErrorDisplay.vue';
+import NotificationCenter from '@/components/NotificationCenter.vue';
+import OnlineUsers from '@/components/OnlineUsers.vue';
 import type { CreateTaskPayload } from '@/types';
 
 const tasks = useTaskStore();
+const auth = useAuthStore();
+const { taskEvents, emitTaskCreated, emitTaskToggled, emitTaskDeleted } = useWebSocket(
+  auth.user?.id,
+  auth.user?.username
+);
 
 const handleCreateTask = async (payload: CreateTaskPayload) => {
   await tasks.createTask(payload);
+  // Emit event to WebSocket
+  if (tasks.tasks.length > 0) {
+    emitTaskCreated(tasks.tasks[0]);
+  }
 };
 
 const handleToggleTask = async (taskId: number) => {
   await tasks.toggleTask(taskId);
+  const task = tasks.tasks.find((t) => t.id === taskId);
+  if (task) {
+    emitTaskToggled(task);
+  }
 };
 
 const handleDeleteTask = async (taskId: number) => {
   await tasks.deleteTask(taskId);
+  emitTaskDeleted(taskId);
 };
 
 onMounted(async () => {
@@ -29,9 +47,16 @@ onMounted(async () => {
 <template>
   <AppLayout>
     <div class="space-y-6">
-      <div>
-        <h1 class="text-3xl font-bold text-slate-900">My Tasks</h1>
-        <p class="text-slate-600 mt-2">Manage your tasks efficiently</p>
+      <!-- Header with WebSocket Status -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900">My Tasks</h1>
+          <p class="text-slate-600 mt-2">Manage your tasks efficiently</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <NotificationCenter />
+          <OnlineUsers />
+        </div>
       </div>
 
       <!-- Task Form -->

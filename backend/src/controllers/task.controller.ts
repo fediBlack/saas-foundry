@@ -3,6 +3,7 @@ import prisma from "../utils/prisma";
 import { AuthRequest } from "../types/auth.types";
 import { CreateTaskInput, UpdateTaskInput } from "../schemas/task.schema";
 import { NotFoundError, sendErrorResponse } from "../utils/errors";
+import { WebSocketServer } from "../websocket/socket";
 
 // Get all tasks for authenticated user
 export const getTasks = async (
@@ -64,6 +65,15 @@ export const createTask = async (
       },
     });
 
+    // Emit WebSocket event
+    const wsServer = req.app.locals.wsServer as WebSocketServer;
+    if (wsServer) {
+      wsServer.emitToUser(req.userId!, "task:created", {
+        task,
+        userId: req.userId,
+      });
+    }
+
     res.status(201).json({ task });
   } catch (error) {
     sendErrorResponse(res, error);
@@ -104,6 +114,15 @@ export const updateTask = async (
       },
     });
 
+    // Emit WebSocket event
+    const wsServer = req.app.locals.wsServer as WebSocketServer;
+    if (wsServer) {
+      wsServer.emitToUser(req.userId!, "task:updated", {
+        task,
+        userId: req.userId,
+      });
+    }
+
     res.json({ task });
   } catch (error) {
     sendErrorResponse(res, error);
@@ -135,6 +154,15 @@ export const deleteTask = async (
       where: { id: taskId },
     });
 
+    // Emit WebSocket event
+    const wsServer = req.app.locals.wsServer as WebSocketServer;
+    if (wsServer) {
+      wsServer.emitToUser(req.userId!, "task:deleted", {
+        taskId,
+        userId: req.userId,
+      });
+    }
+
     res.json({ message: "Task deleted successfully" });
   } catch (error) {
     sendErrorResponse(res, error);
@@ -165,6 +193,15 @@ export const toggleTask = async (
       where: { id: taskId },
       data: { completed: !existingTask.completed },
     });
+
+    // Emit WebSocket event
+    const wsServer = req.app.locals.wsServer as WebSocketServer;
+    if (wsServer) {
+      wsServer.emitToUser(req.userId!, "task:toggled", {
+        task,
+        userId: req.userId,
+      });
+    }
 
     res.json({ task });
   } catch (error) {
