@@ -1,40 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
+import { onMounted } from 'vue';
 import { useTaskStore } from '@/stores/task';
-import { Button, Input, Card, Alert } from 'vue3-ui-kit';
-import type { CreateTaskPayload, TaskPriority } from '@/types';
+import AppLayout from '@/layouts/AppLayout.vue';
+import TaskForm from '@/components/TaskForm.vue';
+import TaskList from '@/components/TaskList.vue';
+import ErrorDisplay from '@/components/ErrorDisplay.vue';
+import type { CreateTaskPayload } from '@/types';
 
-const auth = useAuthStore();
 const tasks = useTaskStore();
-const router = useRouter();
 
-// Form state
-const newTitle = ref('');
-const newDescription = ref('');
-const newPriority = ref<TaskPriority>('MEDIUM');
-
-const handleAddTask = async () => {
-  if (!newTitle.value.trim()) return;
-
-  const payload: CreateTaskPayload = {
-    title: newTitle.value,
-    description: newDescription.value || undefined,
-    priority: newPriority.value,
-  };
-
-  const result = await tasks.createTask(payload);
-  if (result) {
-    newTitle.value = '';
-    newDescription.value = '';
-    newPriority.value = 'MEDIUM';
-  }
+const handleCreateTask = async (payload: CreateTaskPayload) => {
+  await tasks.createTask(payload);
 };
 
-const handleLogout = async () => {
-  await auth.logout();
-  router.push({ name: 'login' });
+const handleToggleTask = async (taskId: number) => {
+  await tasks.toggleTask(taskId);
+};
+
+const handleDeleteTask = async (taskId: number) => {
+  await tasks.deleteTask(taskId);
 };
 
 onMounted(async () => {
@@ -43,105 +27,46 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100 py-10">
-    <div class="max-w-3xl mx-auto space-y-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">Dashboard</h1>
-        <div class="flex items-center gap-3">
-          <span class="text-sm text-slate-600">{{ auth.user?.email }}</span>
-          <Button @click="handleLogout">Logout</Button>
-        </div>
+  <AppLayout>
+    <div class="space-y-6">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">My Tasks</h1>
+        <p class="text-slate-600 mt-2">Manage your tasks efficiently</p>
       </div>
 
-      <!-- New Task Form -->
-      <Card shadow="lg">
-        <template #header>Create New Task</template>
+      <!-- Task Form -->
+      <TaskForm @submit="handleCreateTask" />
 
-        <form class="space-y-4" @submit.prevent="handleAddTask">
-          <Input v-model="newTitle" label="Title" placeholder="Task title..." required />
-          <Input
-            v-model="newDescription"
-            label="Description"
-            type="text"
-            placeholder="Task description (optional)..."
-          />
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
-              Priority
-            </label>
-            <select
-              v-model="newPriority"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-            </select>
-          </div>
-          <Button :loading="tasks.loading" class="w-full" type="submit">
-            Add Task
-          </Button>
-        </form>
-      </Card>
+      <!-- Error Display -->
+      <ErrorDisplay
+        :message="tasks.error"
+        @dismiss="tasks.clearError"
+      />
 
-      <!-- Error Alert -->
-      <Alert v-if="tasks.error" variant="error" title="Error" :dismissible="true">
-        {{ tasks.error }}
-      </Alert>
+      <!-- Task List -->
+      <TaskList
+        :tasks="tasks.tasks"
+        :is-loading="tasks.loading"
+        :title="`My Tasks`"
+        @toggle="handleToggleTask"
+        @delete="handleDeleteTask"
+      />
 
-      <!-- Tasks List -->
-      <Card shadow="lg">
-        <template #header>
-          My Tasks ({{ tasks.taskCount }})
-        </template>
-
-        <div v-if="tasks.loading" class="text-sm text-slate-500">Loading tasks...</div>
-
-        <div v-else-if="!tasks.taskCount" class="text-sm text-slate-500">
-          No tasks yet. Create your first one above.
+      <!-- Task Stats -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg shadow p-4">
+          <p class="text-sm text-slate-600">Total Tasks</p>
+          <p class="text-2xl font-bold text-slate-900">{{ tasks.taskCount }}</p>
         </div>
-
-        <ul v-else class="space-y-2">
-          <li
-            v-for="task in tasks.tasks"
-            :key="task.id"
-            class="flex items-center justify-between rounded border bg-white px-3 py-2 hover:bg-slate-50 transition"
-          >
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <p
-                  class="font-medium"
-                  :class="{ 'line-through text-slate-400': task.completed }"
-                >
-                  {{ task.title }}
-                </p>
-                <span
-                  class="text-xs px-2 py-1 rounded"
-                  :class="{
-                    'bg-red-100 text-red-700': task.priority === 'HIGH',
-                    'bg-yellow-100 text-yellow-700': task.priority === 'MEDIUM',
-                    'bg-green-100 text-green-700': task.priority === 'LOW',
-                  }"
-                >
-                  {{ task.priority }}
-                </span>
-              </div>
-              <p v-if="task.description" class="text-xs text-slate-500 mt-1">
-                {{ task.description }}
-              </p>
-            </div>
-            <div class="flex items-center gap-2 ml-4">
-              <Button size="sm" @click="tasks.toggleTask(task.id)">
-                {{ task.completed ? 'Undo' : 'Done' }}
-              </Button>
-              <Button size="sm" variant="danger" @click="tasks.deleteTask(task.id)">
-                Delete
-              </Button>
-            </div>
-          </li>
-        </ul>
-      </Card>
+        <div class="bg-white rounded-lg shadow p-4">
+          <p class="text-sm text-slate-600">Completed</p>
+          <p class="text-2xl font-bold text-green-600">{{ tasks.completedCount }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+          <p class="text-sm text-slate-600">Pending</p>
+          <p class="text-2xl font-bold text-orange-600">{{ tasks.pendingCount }}</p>
+        </div>
+      </div>
     </div>
-  </div>
+  </AppLayout>
 </template>

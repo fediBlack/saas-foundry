@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter, RouterLink } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '@/stores/auth';
 import { Button, Input, Card, Alert } from 'vue3-ui-kit';
+import AuthLayout from '@/layouts/AuthLayout.vue';
 import type { RegisterPayload } from '@/types';
 
 const name = ref('');
@@ -37,9 +38,8 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-slate-100">
-    <div class="w-full max-w-md">
-      <Card shadow="lg">
+  <AuthLayout>
+    <Card shadow="lg">
         <template #header>Register</template>
 
         <form class="space-y-4" @submit.prevent="handleSubmit">
@@ -95,6 +95,5 @@ const handleSubmit = async () => {
           </p>
         </template>
       </Card>
-    </div>
-  </div>
+  </AuthLayout>
 </template>
