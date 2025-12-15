@@ -28,15 +28,18 @@ export const useTaskStore = defineStore('task', {
       this.error = null;
 
       try {
-        const { data, error } = await apiUtils.get<Task[]>('/tasks');
+        const { data, error } = await apiUtils.get<any>('/tasks');
 
         if (error) {
           this.error = getFirstErrorMessage(error);
           return false;
         }
 
-        if (Array.isArray(data)) {
-          this.tasks = data;
+        // Handle different response formats
+        // Backend returns { tasks: [...], count: ... }
+        const tasks = Array.isArray(data) ? data : (data?.tasks || []);
+        if (Array.isArray(tasks)) {
+          this.tasks = tasks;
           return true;
         }
       } catch (err) {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosError } from 'axios';
-import type { ApiError, ApiResponse } from '@/types';
+import type { ApiError } from '@/types';
 
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
@@ -15,8 +15,16 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.response.use(
   (response) => {
     // Success response - extract data from wrapper
-    const data = response.data as ApiResponse<any>;
-    return data.data || data;
+    const data = response.data as any;
+    // Handle different response formats
+    // If response has a 'data' property, use it
+    // If response has 'tasks' or other collection properties, use them
+    // Otherwise return the whole response
+    if (data.data !== undefined) {
+      return data.data;
+    }
+    // Return the whole response if it's already the data
+    return data;
   },
   (error: AxiosError<ApiError>) => {
     // Error response handling
