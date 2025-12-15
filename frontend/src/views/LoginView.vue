@@ -4,14 +4,20 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { Button, Input, Card, Alert } from 'vue3-ui-kit';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import { useLoginValidation } from '@/composables/useFormValidation';
 import type { LoginPayload } from '@/types';
 
 const email = ref('');
 const password = ref('');
 const auth = useAuthStore();
 const router = useRouter();
+const { validate, errors, markTouched, clearErrors } = useLoginValidation();
 
 const handleSubmit = async () => {
+  // Validate form
+  const isValid = validate({ email: email.value, password: password.value });
+  if (!isValid) return;
+
   const payload: LoginPayload = {
     email: email.value,
     password: password.value,
@@ -23,10 +29,15 @@ const handleSubmit = async () => {
   }
 };
 
+const handleFieldBlur = (field: string) => {
+  markTouched(field);
+};
+
 onMounted(() => {
   if (auth.isAuthenticated) {
     router.push({ name: 'dashboard' });
   }
+  clearErrors();
 });
 </script>
 
@@ -36,20 +47,33 @@ onMounted(() => {
         <template #header>Login</template>
 
         <form class="space-y-4" @submit.prevent="handleSubmit">
-          <Input
-            v-model="email"
-            label="Email"
-            type="email"
-            placeholder="your@email.com"
-            required
-          />
-          <Input
-            v-model="password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            required
-          />
+          <div>
+            <Input
+              v-model="email"
+              label="Email"
+              type="email"
+              placeholder="your@email.com"
+              required
+              @blur="handleFieldBlur('email')"
+            />
+            <p v-if="errors.email" class="mt-1 text-sm text-red-600">
+              {{ errors.email }}
+            </p>
+          </div>
+
+          <div>
+            <Input
+              v-model="password"
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              required
+              @blur="handleFieldBlur('password')"
+            />
+            <p v-if="errors.password" class="mt-1 text-sm text-red-600">
+              {{ errors.password }}
+            </p>
+          </div>
 
           <Alert
             v-if="auth.error"
