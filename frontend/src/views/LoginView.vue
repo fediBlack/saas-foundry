@@ -1,24 +1,30 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "../stores/auth";
-import { Button, Input, Card, Alert } from "vue3-ui-kit";
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import { Button, Input, Card, Alert } from 'vue3-ui-kit';
+import type { LoginPayload } from '@/types';
 
-const email = ref("");
-const password = ref("");
+const email = ref('');
+const password = ref('');
 const auth = useAuthStore();
 const router = useRouter();
 
 const handleSubmit = async () => {
-  await auth.login(email.value, password.value);
-  if (auth.isAuthenticated) {
-    router.push({ name: "dashboard" });
+  const payload: LoginPayload = {
+    email: email.value,
+    password: password.value,
+  };
+
+  const success = await auth.login(payload);
+  if (success) {
+    router.push({ name: 'dashboard' });
   }
 };
 
 onMounted(() => {
   if (auth.isAuthenticated) {
-    router.push({ name: "dashboard" });
+    router.push({ name: 'dashboard' });
   }
 });
 </script>
@@ -30,14 +36,27 @@ onMounted(() => {
         <template #header>Login</template>
 
         <form class="space-y-4" @submit.prevent="handleSubmit">
-          <Input v-model="email" label="Email" type="email" required />
-          <Input v-model="password" label="Password" type="password" required />
+          <Input
+            v-model="email"
+            label="Email"
+            type="email"
+            placeholder="your@email.com"
+            required
+          />
+          <Input
+            v-model="password"
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            required
+          />
 
           <Alert
             v-if="auth.error"
             variant="error"
-            title="Login failed"
-            :dismissible="false"
+            title="Login Failed"
+            :dismissible="true"
+            @dismiss="auth.clearError"
           >
             {{ auth.error }}
           </Alert>

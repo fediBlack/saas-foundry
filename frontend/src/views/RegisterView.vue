@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter, RouterLink } from "vue-router";
-import { useAuthStore } from "../stores/auth";
-import { Button, Input, Card, Alert } from "vue3-ui-kit";
+import { ref } from 'vue';
+import { useRouter, RouterLink } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import { Button, Input, Card, Alert } from 'vue3-ui-kit';
+import type { RegisterPayload } from '@/types';
 
-const name = ref("");
-const email = ref("");
-const password = ref("");
-const confirmPassword = ref("");
+const name = ref('');
+const email = ref('');
+const password = ref('');
+const confirmPassword = ref('');
 const localError = ref<string | null>(null);
 
 const auth = useAuthStore();
@@ -17,14 +18,20 @@ const handleSubmit = async () => {
   localError.value = null;
 
   if (password.value !== confirmPassword.value) {
-    localError.value = "Passwords do not match";
+    localError.value = 'Passwords do not match';
     return;
   }
 
-  await auth.register(email.value, password.value, name.value);
+  const payload: RegisterPayload = {
+    email: email.value,
+    password: password.value,
+    name: name.value || undefined,
+  };
 
-  if (!auth.error && auth.isAuthenticated) {
-    router.push({ name: "dashboard" });
+  const success = await auth.register(payload);
+
+  if (success) {
+    router.push({ name: 'dashboard' });
   }
 };
 </script>
@@ -36,27 +43,46 @@ const handleSubmit = async () => {
         <template #header>Register</template>
 
         <form class="space-y-4" @submit.prevent="handleSubmit">
-          <Input v-model="name" label="Name" type="text" required />
-          <Input v-model="email" label="Email" type="email" required />
-          <Input v-model="password" label="Password" type="password" required />
+          <Input
+            v-model="name"
+            label="Name (optional)"
+            type="text"
+            placeholder="John Doe"
+          />
+          <Input
+            v-model="email"
+            label="Email"
+            type="email"
+            placeholder="your@email.com"
+            required
+          />
+          <Input
+            v-model="password"
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            required
+          />
           <Input
             v-model="confirmPassword"
             label="Confirm Password"
             type="password"
+            placeholder="••••••••"
             required
           />
 
           <Alert
             v-if="localError || auth.error"
             variant="error"
-            title="Registration failed"
-            :dismissible="false"
+            title="Registration Failed"
+            :dismissible="true"
+            @dismiss="auth.clearError"
           >
             {{ localError || auth.error }}
           </Alert>
 
           <Button :loading="auth.loading" class="w-full" type="submit">
-            Create account
+            Create Account
           </Button>
         </form>
 

@@ -1,89 +1,148 @@
-import { defineStore } from "pinia";
-import axios from "axios";
+import { defineStore } from 'pinia';
+import { apiUtils } from '@/utils';
+import { getFirstErrorMessage } from '@/utils/errors';
+import type { User, LoginPayload, RegisterPayload, AuthResponse, AuthState } from '@/types';
 
-axios.defaults.baseURL = "http://localhost:5000/api";
-axios.defaults.withCredentials = true;
-
-interface User {
-  id: number;
-  email: string;
-  name?: string | null;
-}
-
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
-  initialized: boolean;
-}
-
-export const useAuthStore = defineStore("auth", {
+export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: null,
-    token: localStorage.getItem("token"),
+    token: localStorage.getItem('token'),
     loading: false,
     error: null,
     initialized: false,
   }),
+
   getters: {
     isAuthenticated: (state) => !!state.user,
+    errorMessages: (state) => (state.error ? [state.error] : []),
   },
+
   actions: {
-    async register(email: string, password: string, name?: string) {
+    /**
+     * Register new user
+     */
+    async register(payload: RegisterPayload) {
       this.loading = true;
       this.error = null;
+
       try {
-        const res = await axios.post("/auth/register", {
-          email,
-          password,
-          name,
-        });
-        this.user = res.data.user;
-        this.token = res.data.token;
-        localStorage.setItem("token", this.token || "");
-      } catch (err: any) {
-        this.error = err.response?.data?.error || "Registration failed";
-      } finally {
-        this.loading = false;
-        this.initialized = true;
-      }
-    },
-    async login(email: string, password: string) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const res = await axios.post("/auth/login", { email, password });
-        this.user = res.data.user;
-        this.token = res.data.token;
-        localStorage.setItem("token", this.token || "");
-      } catch (err: any) {
-        this.error = err.response?.data?.error || "Login failed";
+        const { data, error } = await apiUtils.post<AuthResponse>('/auth/register', payload);
+
+        if (error) {
+          this.error = getFirstErrorMessage(error);
+          return false;
+        }
+
+        if (data) {
+          this.user = data.user;
+          this.token = data.token;
+          localStorage.setItem('token', this.token);
+          this.initialized = true;
+          return true;
+        }
+      } catch (err) {
+        this.error = 'An unexpected error occurred during registration';
       } finally {
         this.loading = false;
       }
+
+      return false;
     },
+
+    /**
+     * Login user
+     */
+    async login(payload: LoginPayload) {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const { data, error } = await apiUtils.post<AuthResponse>('/auth/login', payload);
+
+        if (error) {
+          this.error = getFirstErrorMessage(error);
+          return false;
+        }
+
+        if (data) {
+          this.user = data.user;
+          this.token = data.token;
+          localStorage.setItem('token', this.token);
+          this.initialized = true;
+          return true;
+        }
+      } catch (err) {
+        this.error = 'An unexpected error occurred during login';
+      } finally {
+        this.loading = false;
+      }
+
+      return false;
+    },
+
+    /**
+     * Fetch current user (validate token)
+     */
     async fetchMe() {
       this.loading = true;
-      this.error = null;
-      try {
-        const res = await axios.get("/auth/me", {
-          headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
-        });
 
-        this.user = res.data.user;
-      } catch {
+      try {
+        const { data, error } = await apiUtils.get<{ user: User }>('/auth/me');
+
+        if (error) {
+          this.user = null;
+          this.token = null;
+          localStorage.removeItem('token');
+          return false;
+        }
+
+        if (data?.user) {
+          this.user = data.user;
+          this.initialized = true;
+          return true;
+        }
+      } catch (err) {
         this.user = null;
         this.token = null;
+        localStorage.removeItem('token');
       } finally {
         this.loading = false;
       }
+
+      return false;
     },
+
+    /**
+     * Logout user
+     */
     async logout() {
-      await axios.post("/auth/logout");
-      localStorage.removeItem("token");
-      this.user = null;
-      this.token = null;
+      try {
+        await apiUtils.post('/auth/logout');
+      } catch {
+        // Logout error is not critical
+      } finally {
+        localStorage.removeItem('token');
+        this.user = null;
+        this.token = null;
+        this.error = null;
+      }
+    },
+
+    /**
+     * Clear error message
+     */
+    clearError() {
+      this.error = null;
+    },
+
+    /**
+     * Initialize store (check if token is valid)
+     */
+    async initialize() {
+      if (this.token && !this.initialized) {
+        await this.fetchMe();
+      }
+      this.initialized = true;
     },
   },
 });
