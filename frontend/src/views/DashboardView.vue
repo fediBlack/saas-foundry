@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, onBeforeUnmount } from 'vue';
 import { useTaskStore } from '@/stores/task';
 import { useAuthStore } from '@/stores/auth';
 import { useWebSocket } from '@/composables/useWebSocket';
@@ -20,19 +20,39 @@ const { emitTaskDeleted } = useWebSocket(
 
 const handleCreateTask = async (payload: CreateTaskPayload) => {
   await tasks.createTask(payload);
+  // Refresh tasks list after creation
+  await tasks.fetchTasks();
 };
 
 const handleToggleTask = async (taskId: number) => {
   await tasks.toggleTask(taskId);
+  // Refresh tasks list after toggle
+  await tasks.fetchTasks();
 };
 
 const handleDeleteTask = async (taskId: number) => {
   await tasks.deleteTask(taskId);
   emitTaskDeleted(taskId);
+  // Refresh tasks list after deletion
+  await tasks.fetchTasks();
 };
 
+// Fetch tasks when component mounts and when becoming visible
 onMounted(async () => {
   await tasks.fetchTasks();
+});
+
+// Handle page visibility changes - refetch when user returns to tab
+const handleVisibilityChange = async () => {
+  if (!document.hidden) {
+    await tasks.fetchTasks();
+  }
+};
+
+document.addEventListener('visibilitychange', handleVisibilityChange);
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 

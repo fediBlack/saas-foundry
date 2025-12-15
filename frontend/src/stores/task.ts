@@ -32,23 +32,28 @@ export const useTaskStore = defineStore('task', {
 
         if (error) {
           this.error = getFirstErrorMessage(error);
+          this.loading = false;
           return false;
         }
 
-        // Handle different response formats
-        // Backend returns { tasks: [...], count: ... }
-        const tasks = Array.isArray(data) ? data : (data?.tasks || []);
-        if (Array.isArray(tasks)) {
-          this.tasks = tasks;
-          return true;
+        // Handle different response formats from backend
+        // Backend returns either { tasks: [...], count: ... } or just the array
+        let tasks: Task[] = [];
+        
+        if (Array.isArray(data)) {
+          tasks = data;
+        } else if (data && typeof data === 'object' && 'tasks' in data) {
+          tasks = Array.isArray(data.tasks) ? data.tasks : [];
         }
+
+        this.tasks = tasks;
+        this.loading = false;
+        return true;
       } catch (err) {
         this.error = 'Failed to fetch tasks';
-      } finally {
         this.loading = false;
+        return false;
       }
-
-      return false;
     },
 
     /**
@@ -83,23 +88,26 @@ export const useTaskStore = defineStore('task', {
       this.error = null;
 
       try {
-        const { data, error } = await apiUtils.post<Task>('/tasks', payload);
+        const { data, error } = await apiUtils.post<any>('/tasks', payload);
 
         if (error) {
           this.error = getFirstErrorMessage(error);
+          this.loading = false;
           return null;
         }
 
-        if (data) {
-          this.tasks.push(data);
-          return data;
+        // Handle response format: { task: {...} } or just {...}
+        const task = data?.task || data;
+        if (task && typeof task === 'object' && 'id' in task) {
+          this.tasks.unshift(task as Task);
+          this.loading = false;
+          return task as Task;
         }
       } catch (err) {
         this.error = 'Failed to create task';
-      } finally {
-        this.loading = false;
       }
 
+      this.loading = false;
       return null;
     },
 
@@ -111,26 +119,29 @@ export const useTaskStore = defineStore('task', {
       this.error = null;
 
       try {
-        const { data, error } = await apiUtils.patch<Task>(`/tasks/${id}`, payload);
+        const { data, error } = await apiUtils.put<any>(`/tasks/${id}`, payload);
 
         if (error) {
           this.error = getFirstErrorMessage(error);
+          this.loading = false;
           return null;
         }
 
-        if (data) {
+        // Handle response format: { task: {...} } or just {...}
+        const task = data?.task || data;
+        if (task && typeof task === 'object' && 'id' in task) {
           const index = this.tasks.findIndex((t: Task) => t.id === id);
           if (index !== -1) {
-            this.tasks[index] = data;
+            this.tasks[index] = task as Task;
           }
-          return data;
+          this.loading = false;
+          return task as Task;
         }
       } catch (err) {
         this.error = 'Failed to update task';
-      } finally {
-        this.loading = false;
       }
 
+      this.loading = false;
       return null;
     },
 
@@ -155,23 +166,25 @@ export const useTaskStore = defineStore('task', {
       this.error = null;
 
       try {
-        const { data, error } = await apiUtils.delete<{ success: boolean }>(`/tasks/${id}`);
+        const { data, error } = await apiUtils.delete<any>(`/tasks/${id}`);
 
         if (error) {
           this.error = getFirstErrorMessage(error);
+          this.loading = false;
           return false;
         }
 
-        if (data?.success) {
+        // Check for success message in response
+        if (data?.message || data?.success) {
           this.tasks = this.tasks.filter((t: Task) => t.id !== id);
+          this.loading = false;
           return true;
         }
       } catch (err) {
         this.error = 'Failed to delete task';
-      } finally {
-        this.loading = false;
       }
 
+      this.loading = false;
       return false;
     },
 

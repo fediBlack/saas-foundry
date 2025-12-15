@@ -12,6 +12,15 @@ const apiClient: AxiosInstance = axios.create({
   withCredentials: true, // Include cookies in requests
 });
 
+// Request interceptor to add Authorization header
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Response interceptor to handle errors consistently
 apiClient.interceptors.response.use(
   (response) => {
@@ -61,6 +70,16 @@ export const apiUtils = {
   post: async <T>(url: string, data?: any) => {
     try {
       const response = await apiClient.post<T>(url, data);
+      return { data: response as T, error: null };
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
+  },
+
+  // PUT request
+  put: async <T>(url: string, data?: any) => {
+    try {
+      const response = await apiClient.put<T>(url, data);
       return { data: response as T, error: null };
     } catch (error) {
       return { data: null, error: error as ApiError };
