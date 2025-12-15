@@ -13,25 +13,17 @@ import type { CreateTaskPayload } from '@/types';
 
 const tasks = useTaskStore();
 const auth = useAuthStore();
-const { taskEvents, emitTaskCreated, emitTaskToggled, emitTaskDeleted } = useWebSocket(
-  auth.user?.id,
-  auth.user?.username
+const { emitTaskDeleted } = useWebSocket(
+  auth.user?.id?.toString(),
+  auth.user?.name || undefined
 );
 
 const handleCreateTask = async (payload: CreateTaskPayload) => {
   await tasks.createTask(payload);
-  // Emit event to WebSocket
-  if (tasks.tasks.length > 0) {
-    emitTaskCreated(tasks.tasks[0]);
-  }
 };
 
 const handleToggleTask = async (taskId: number) => {
   await tasks.toggleTask(taskId);
-  const task = tasks.tasks.find((t) => t.id === taskId);
-  if (task) {
-    emitTaskToggled(task);
-  }
 };
 
 const handleDeleteTask = async (taskId: number) => {

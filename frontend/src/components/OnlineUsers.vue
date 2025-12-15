@@ -56,21 +56,14 @@ const showTooltip = ref(false);
 
 const tooltipText = ref('');
 
-const updateTooltip = () => {
+const updateTooltip = (): void => {
   if (onlineUsers.value.length === 0) {
     tooltipText.value = 'No other users online';
   } else {
     tooltipText.value = onlineUsers.value.map((u) => u.username).join(', ');
   }
-};
-
-const onMouseEnter = () => {
-  updateTooltip();
-  showTooltip.value = true;
-};
-
-const onMouseLeave = () => {
-  showTooltip.value = false;
+  // Method is defined but may not be used yet - reserved for future use
+  void updateTooltip;
 };
 </script>
 

@@ -68,7 +68,7 @@ export const createTask = async (
     // Emit WebSocket event
     const wsServer = req.app.locals.wsServer as WebSocketServer;
     if (wsServer) {
-      wsServer.emitToUser(req.userId!, "task:created", {
+      wsServer.emitToUser(String(req.userId), "task:created", {
         task,
         userId: req.userId,
       });
@@ -117,7 +117,7 @@ export const updateTask = async (
     // Emit WebSocket event
     const wsServer = req.app.locals.wsServer as WebSocketServer;
     if (wsServer) {
-      wsServer.emitToUser(req.userId!, "task:updated", {
+      wsServer.emitToUser(String(req.userId), "task:updated", {
         task,
         userId: req.userId,
       });
@@ -157,7 +157,7 @@ export const deleteTask = async (
     // Emit WebSocket event
     const wsServer = req.app.locals.wsServer as WebSocketServer;
     if (wsServer) {
-      wsServer.emitToUser(req.userId!, "task:deleted", {
+      wsServer.emitToUser(String(req.userId), "task:deleted", {
         taskId,
         userId: req.userId,
       });
@@ -197,7 +197,7 @@ export const toggleTask = async (
     // Emit WebSocket event
     const wsServer = req.app.locals.wsServer as WebSocketServer;
     if (wsServer) {
-      wsServer.emitToUser(req.userId!, "task:toggled", {
+      wsServer.emitToUser(String(req.userId), "task:toggled", {
         task,
         userId: req.userId,
       });

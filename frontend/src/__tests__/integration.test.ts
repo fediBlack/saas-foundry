@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 let token: string;
-let userId: number;
 let taskId: number;
 
 const testUser = {
@@ -35,7 +34,6 @@ describe('Full Stack Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty('user');
       token = response.data.user.id || response.data.token;
-      userId = response.data.user.id;
     });
 
     it('should get current user profile', async () => {
