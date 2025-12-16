@@ -55,6 +55,8 @@ jobs:
     name: Run Tests
     needs: install
     runs-on: ubuntu-latest
+    env:
+      CI: 'true'
     steps:
       - uses: actions/checkout@v4
       

@@ -17,7 +17,11 @@ const testTask = {
   priority: 'HIGH',
 };
 
-describe('Full Stack Integration Tests', () => {
+// Skip integration tests in CI environment (requires backend server running)
+const isCI = process.env.CI === 'true';
+const describeIntegration = isCI ? describe.skip : describe;
+
+describeIntegration('Full Stack Integration Tests', () => {
   describe('Authentication Flow', () => {
     it('should register a new user', async () => {
       const response = await axios.post(`${API_URL}/auth/register`, testUser);
