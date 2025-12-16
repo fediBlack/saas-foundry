@@ -72,6 +72,9 @@ jobs:
         working-directory: backend
         run: npm ci
       
+      - name: Create .env file
+        run: echo "DATABASE_URL=file:./test.db" > backend/.env && echo "NODE_ENV=test" >> backend/.env
+      
       - name: Generate Prisma client
         working-directory: backend
         run: npx prisma generate
