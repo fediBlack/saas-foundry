@@ -33,8 +33,6 @@ jobs:
     name: Lint & Type Check
     needs: install
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:./test.db"
     steps:
       - uses: actions/checkout@v4
       
@@ -48,6 +46,14 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        working-directory: backend
+        run: |
+          echo 'DATABASE_URL="file:./test.db"' > .env
+          echo 'PORT=5000' >> .env
+          echo 'JWT_SECRET=test-secret-key-min-32-characters-long-' >> .env
+          echo 'NODE_ENV=test' >> .env
       
       - name: Generate Prisma client
         working-directory: backend
@@ -61,8 +67,6 @@ jobs:
     name: Run Tests
     needs: install
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:./test.db"
     steps:
       - uses: actions/checkout@v4
       
@@ -76,6 +80,14 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        working-directory: backend
+        run: |
+          echo 'DATABASE_URL="file:./test.db"' > .env
+          echo 'PORT=5000' >> .env
+          echo 'JWT_SECRET=test-secret-key-min-32-characters-long-' >> .env
+          echo 'NODE_ENV=test' >> .env
       
       - name: Generate Prisma client
         working-directory: backend
@@ -96,8 +108,6 @@ jobs:
     name: Build
     needs: [lint, test]
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:./test.db"
     steps:
       - uses: actions/checkout@v4
       
@@ -111,6 +121,14 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        working-directory: backend
+        run: |
+          echo 'DATABASE_URL="file:./test.db"' > .env
+          echo 'PORT=5000' >> .env
+          echo 'JWT_SECRET=test-secret-key-min-32-characters-long-' >> .env
+          echo 'NODE_ENV=test' >> .env
       
       - name: Generate Prisma client
         working-directory: backend
@@ -181,6 +199,14 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        working-directory: backend
+        run: |
+          echo 'DATABASE_URL="file:./test.db"' > .env
+          echo 'PORT=5000' >> .env
+          echo 'JWT_SECRET=test-secret-key-min-32-characters-long-' >> .env
+          echo 'NODE_ENV=test' >> .env
       
       - name: Generate Prisma client
         working-directory: backend
