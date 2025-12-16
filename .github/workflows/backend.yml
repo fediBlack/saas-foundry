@@ -33,8 +33,6 @@ jobs:
     name: Lint & Type Check
     needs: install
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:/tmp/test.db"
     steps:
       - uses: actions/checkout@v4
       
@@ -48,6 +46,9 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        run: echo "DATABASE_URL=file:./test.db" > backend/.env && echo "NODE_ENV=test" >> backend/.env
       
       - name: Generate Prisma client
         working-directory: backend
@@ -61,8 +62,6 @@ jobs:
     name: Run Tests
     needs: install
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:/tmp/test.db"
     steps:
       - uses: actions/checkout@v4
       
@@ -76,6 +75,9 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        run: echo "DATABASE_URL=file:./test.db" > backend/.env && echo "NODE_ENV=test" >> backend/.env
       
       - name: Generate Prisma client
         working-directory: backend
@@ -96,8 +98,6 @@ jobs:
     name: Build
     needs: [lint, test]
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:/tmp/test.db"
     steps:
       - uses: actions/checkout@v4
       
@@ -111,6 +111,9 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        run: echo "DATABASE_URL=file:./test.db" > backend/.env && echo "NODE_ENV=test" >> backend/.env
       
       - name: Generate Prisma client
         working-directory: backend
@@ -164,12 +167,6 @@ jobs:
     name: Integration Tests
     needs: build
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "file:/tmp/test.db"
-    services:
-      sqlite:
-        image: nouchka/sqlite3:latest
-        options: --health-cmd="sqlite3 /tmp/test.db" --health-interval=10s --health-timeout=5s --health-retries=5
     steps:
       - uses: actions/checkout@v4
       
@@ -183,6 +180,9 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Create .env file
+        run: echo "DATABASE_URL=file:./test.db" > backend/.env && echo "NODE_ENV=test" >> backend/.env
       
       - name: Generate Prisma client
         working-directory: backend
