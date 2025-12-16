@@ -25,9 +25,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'backend/package-lock.json'
       
+      - name: Create .env file
+        run: echo "DATABASE_URL=file:./test.db" > backend/.env && echo "NODE_ENV=test" >> backend/.env
+      
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
 
   lint:
     name: Lint & Type Check
