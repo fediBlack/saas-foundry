@@ -2,20 +2,23 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Create .env file FIRST before anything else
+RUN echo "DATABASE_URL=file:./dev.db" > .env
+
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
 RUN npm ci
 
-# Copy source
+# Copy source (this will include .env that we created, but we overwrite it)
 COPY . .
 
-# Create .env file for Prisma generation
-RUN echo "DATABASE_URL=file:./prisma/dev.db" > .env
+# Make sure .env exists for Prisma
+RUN echo "DATABASE_URL=file:./dev.db" > .env
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate Prisma client with explicit path
+RUN DATABASE_URL=file:./dev.db npx prisma generate
 
 # Build TypeScript
 RUN npm run build
