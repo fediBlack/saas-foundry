@@ -21,6 +21,11 @@ describe("Task Controller", () => {
     mockRequest = {
       body: {},
       userId: 1,
+      app: {
+        locals: {
+          wsServer: null, // WebSocket server not available in tests
+        },
+      } as any,
     };
 
     mockResponse = {
