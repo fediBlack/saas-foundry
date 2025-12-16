@@ -11,43 +11,52 @@ on:
     paths:
       - 'frontend/**'
 
+env:
+  NODE_VERSION: '20.19.5'
+
 jobs:
   install:
     name: Install Dependencies
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.5'
+          node-version: ${{ env.NODE_VERSION }}
       
       - name: Verify Node.js version
-        run: node --version && npm --version
+        run: |
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          node --version | grep -q "v20" && echo "✓ Node 20 confirmed" || (echo "✗ Wrong Node version" && exit 1)
       
       - name: Clear npm cache
         run: npm cache clean --force
       
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci --no-audit
+        run: npm ci --prefer-offline --no-audit
 
   lint:
     name: Lint & Type Check
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.5'
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Verify Node.js version
+        run: node --version | grep -q "v20" && echo "✓ Node 20 confirmed" || (echo "✗ Wrong Node version" && exit 1)
       
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci --no-audit
+        run: npm ci --prefer-offline --no-audit
       
       - name: Run TypeScript type check
         working-directory: frontend
@@ -56,20 +65,23 @@ jobs:
   test:
     name: Run Tests
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       CI: 'true'
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.5'
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Verify Node.js version
+        run: node --version | grep -q "v20" && echo "✓ Node 20 confirmed" || (echo "✗ Wrong Node version" && exit 1)
       
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci --no-audit
+        run: npm ci --prefer-offline --no-audit
       
       - name: Run tests
         working-directory: frontend
@@ -89,18 +101,21 @@ jobs:
   build:
     name: Build
     needs: [lint, test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.5'
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Verify Node.js version
+        run: node --version | grep -q "v20" && echo "✓ Node 20 confirmed" || (echo "✗ Wrong Node version" && exit 1)
       
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci --no-audit
+        run: npm ci --prefer-offline --no-audit
       
       - name: Build
         working-directory: frontend
@@ -116,18 +131,21 @@ jobs:
   security-scan:
     name: Security Scan
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.5'
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Verify Node.js version
+        run: node --version | grep -q "v20" && echo "✓ Node 20 confirmed" || (echo "✗ Wrong Node version" && exit 1)
       
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci --no-audit
+        run: npm ci --prefer-offline --no-audit
       
       - name: Run npm audit
         working-directory: frontend
@@ -147,7 +165,7 @@ jobs:
   deploy-preview:
     name: Deploy Preview
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
@@ -172,7 +190,7 @@ jobs:
   build-summary:
     name: Build Summary
     needs: [lint, test, build, security-scan]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: always()
     steps:
       - name: Check build status
