@@ -11,6 +11,9 @@ RUN npm ci
 # Copy source
 COPY . .
 
+# Create .env file for Prisma generation
+RUN echo "DATABASE_URL=file:./prisma/dev.db" > .env
+
 # Generate Prisma client
 RUN npx prisma generate
 
